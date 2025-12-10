@@ -1,12 +1,6 @@
 {
-  "name": "path-atlas",
-  "version": "1.0.0",
-  "description": "A database implementation for handling localized files",
-  "main": "dist/index.js",
-  "repository": "https://github.com/LSUHSC-CAIPP-Core-B/PathAtlas",
   "author": "Sebastian Sereno",
-  "license": "All Rights Reserved",
-  "private": true,
+  "description": "A database implementation for handling localized files",
   "devDependencies": {
     "@biomejs/biome": "2.3.8",
     "@types/node": "^24.10.1",
@@ -14,14 +8,21 @@
     "dotenv": "^17.2.3",
     "lefthook": "^2.0.9",
     "nodemon": "^3.1.11",
-    "typescript": "^5.9.3"
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.9.3",
+    "webpack": "^5.103.0",
+    "webpack-cli": "^6.0.1",
+    "webpack-node-externals": "^3.0.0"
   },
-  "dependencies": {
-    "mongoose": "^9.0.1"
-  },
+  "license": "All Rights Reserved",
+  "main": "dist/index.js",
+  "name": "path-atlas",
+  "private": true,
+  "repository": "https://github.com/LSUHSC-CAIPP-Core-B/PathAtlas",
   "scripts": {
+    "build": "webpack",
     "dev": "nodemon",
-    "build": "tsc",
     "start": "node dist/index.js"
-  }
+  },
+  "version": "1.0.0"
 }
