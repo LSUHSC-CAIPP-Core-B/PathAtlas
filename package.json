@@ -1,0 +1,25 @@
+{
+  "name": "path-atlas",
+  "version": "1.0.0",
+  "description": "A database implementation for handling localized files",
+  "main": "dist/index.js",
+  "repository": "https://github.com/LSUHSC-CAIPP-Core-B/PathAtlas",
+  "author": "Sebastian Sereno",
+  "license": "All Rights Reserved",
+  "private": true,
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/url-parse": "^1.4.11",
+    "dotenv": "^17.2.3",
+    "nodemon": "^3.1.11",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "mongoose": "^9.0.1"
+  },
+  "scripts": {
+    "dev": "nodemon",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  }
+}
