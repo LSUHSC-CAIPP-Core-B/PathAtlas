@@ -12,6 +12,7 @@ node_modules/
 
 # build / generate output
 dist
+indexes.json
 
 # yarn v2
 .yarn/cache

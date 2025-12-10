@@ -1,6 +1,6 @@
 {
-  "watch": ["src"],
+  "exec": "npx ts-node -r dotenv/config ./src/index.ts",
   "ext": "ts,json",
   "ignore": ["src/**/*.spec.ts"],
-  "exec": "npx ts-node -r dotenv/config ./src/index.ts"
+  "watch": ["src"]
 }
