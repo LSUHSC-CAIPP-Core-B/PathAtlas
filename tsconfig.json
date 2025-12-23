@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "declaration": true,
     "module": "node20",
     "outDir": "./build",
     "target": "es5"

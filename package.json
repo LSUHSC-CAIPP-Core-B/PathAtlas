@@ -1,5 +1,10 @@
 {
   "author": "Sebastian Sereno",
+  "dependencies": {
+    "consola": "^3.4.2",
+    "ignore": "^7.0.5",
+    "mongoose": "^9.0.2"
+  },
   "description": "A database implementation for handling localized files",
   "devDependencies": {
     "@biomejs/biome": "2.3.8",
@@ -20,7 +25,7 @@
   "private": true,
   "repository": "https://github.com/LSUHSC-CAIPP-Core-B/PathAtlas",
   "scripts": {
-    "build": "webpack",
+    "build": "./scripts/build.sh",
     "dev": "nodemon",
     "start": "node dist/index.js"
   },

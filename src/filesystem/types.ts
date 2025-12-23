@@ -1,8 +1,5 @@
-export type Reference = {
-  ignored: string[];
-  packed: PackedFolders;
-} & Record<string, any>;
-
-type PackedFolders = {
-  [folder: string]: string;
+export type EntryIndex = {
+  hash: string;
+  path: string;
+  status?: 'ORIGINAL' | 'CREATED' | 'UPDATED' | 'DELETED';
 };

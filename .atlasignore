@@ -1,0 +1,26 @@
+
+# packaged files & folders
+docs/
+node_modules/
+logs/
+
+.atlasignore
+projects.json
+
+# development files & folders
+.git/
+.vscode/
+build/
+scripts/
+src/
+
+.env
+.gitignore
+biome.json
+lefthook.yml
+nodemon.json
+package-lock.json
+package.json
+tsconfig.json
+webpack.config.js
+yarn.lock
