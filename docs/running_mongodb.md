@@ -13,3 +13,13 @@ After you've installed MongoDB (Community Edition), you can start it with:
 ```bash
 $ brew services start mongodb-community
 ```
+
+
+
+
+Connecting to the Mongo Shell and opening admin
+
+```bash
+$ mongosh
+$ use admin
+```
