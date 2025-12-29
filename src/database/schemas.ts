@@ -4,9 +4,9 @@ import type { FileEntry, HashedEntry, MongoEntry } from './types';
 const required = true,
   trim = true;
 
-const GroupSchema = new Schema<HashedEntry>(
+const ProjectSchema = new Schema<HashedEntry>(
   {
-    entries: [{ refPath: 'groups', type: Schema.Types.ObjectId }],
+    absolutePath: { required, type: String },
     files: [{ refPath: 'files', type: Schema.Types.ObjectId }],
     hash: { required, type: String },
     name: { required, trim, type: String },
@@ -14,6 +14,17 @@ const GroupSchema = new Schema<HashedEntry>(
   },
   hideOptions(),
 );
+
+ProjectSchema.pre('save', function (next: Function) {
+  const absolute = this.get('absolutePath');
+  const relative = this.get('path')
+    .replace(/\/?$/gi, '')
+    .replace(/^(?!\/)\//gi, '/');
+
+  if (absolute.endsWith(relative)) return next();
+
+  next(new Error('Relative Path must resolve to the Absolute Path'));
+});
 
 const FileSchema = new Schema<FileEntry>(
   {
@@ -24,7 +35,7 @@ const FileSchema = new Schema<FileEntry>(
   hideOptions(),
 );
 
-export const GroupModel = model<HashedEntry>('groups', GroupSchema);
+export const ProjectModel = model<HashedEntry>('projects', ProjectSchema);
 export const FileModel = model<FileEntry>('files', FileSchema);
 
 function hideOptions<T>(): SchemaOptions<T & MongoEntry> {

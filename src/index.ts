@@ -1,37 +1,46 @@
 import { existsSync } from 'node:fs';
-import { INDEX_FILE } from './constants';
-import { connectDB } from './database';
+import { INDEX_FILES } from './constants';
+// import { connectDB } from './database';
 import { fetchIndexes } from './filesystem';
-import type { EntryIndex } from './filesystem/types';
 import { LOGGER } from './logger';
-
-LOGGER.info(`New instance @ ${new Date()}`);
-
-if (!existsSync(INDEX_FILE)) {
-  LOGGER.box(
-    'This seems to be the first time you are running this application.\n' +
-      'Please read the installation guide in the docs/ folder.',
-  );
-}
+import { manageProject } from './project';
 
 (async () => {
-  await connectDB();
+  // Log a new instance
+  LOGGER.log('');
+  LOGGER.info(`New instance @ ${new Date()}`);
 
-  const indexes = fetchIndexes().sort((a, b) => a.path.localeCompare(b.path));
-
-  const created = filterAndPrintIndexes(indexes, 'CREATED');
-  const changed = filterAndPrintIndexes(indexes, 'UPDATED');
-  const deleted = filterAndPrintIndexes(indexes, 'DELETED');
-
-  function filterAndPrintIndexes(indexes: EntryIndex[], status: EntryIndex['status']) {
-    const filteredIndexes = indexes.filter((index) => index.status === status);
-    if (filteredIndexes.length === 0) return [];
-
-    // Log all the indexes
-    LOGGER.log(`${status}:`);
-    for (const index of filteredIndexes) LOGGER.log(` - ${index.path} (${index.hash})`);
-    LOGGER.log('');
-
-    return filteredIndexes;
+  // Display first time message
+  if (!existsSync(INDEX_FILES)) {
+    LOGGER.box(
+      'This seems to be the first time you are running this application.\n' +
+        'Please read the installation guide in the docs/ folder.',
+    );
   }
+
+  // Fetch all the changes since last run
+  LOGGER.start('Fetching project changes');
+  const indexes = fetchIndexes().sort((a, b) => a.path.localeCompare(b.path));
+  const changedIndexes = indexes.filter((a) => a.status !== 'ORIGINAL');
+  LOGGER.success(`Found %s projects!`, indexes.length);
+
+  LOGGER.log('');
+  if (changedIndexes.length === 0) {
+    // If no changes were made, let's exit
+    LOGGER.info(`No projects have been updated!`);
+    return;
+  }
+
+  LOGGER.success(`Found %s updated projects!`, changedIndexes.length);
+
+  // Start the database so we can sync
+  // all the changes that have been made
+  // LOGGER.log('');
+  // await connectDB();
+
+  // Start the syncing process
+  LOGGER.log('');
+  LOGGER.start('Syncing changes...');
+
+  for (const changed of changedIndexes) manageProject(changed);
 })();
