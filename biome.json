@@ -35,6 +35,9 @@
       "complexity": {
         "noBannedTypes": "info"
       },
+      "correctness": {
+        "noUnreachable": "info"
+      },
       "recommended": true,
       "style": {
         "useImportType": "on"

@@ -47,6 +47,7 @@ function logEntryChange(
 }
 
 export function logProjectChanges(project: EntryIndex, indexes: EntryIndex[]) {
+  LOGGER.log('');
   const filteredIndexes = indexes.filter((entry) => entry.status !== 'ORIGINAL');
 
   const doesOverflow = filteredIndexes.length > LIMIT_FILES_TO_LOG;

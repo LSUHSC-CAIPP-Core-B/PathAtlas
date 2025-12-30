@@ -9,7 +9,6 @@ const ProjectSchema = new Schema<HashedEntry>(
     absolutePath: { required, type: String },
     files: [{ refPath: 'files', type: Schema.Types.ObjectId }],
     hash: { required, type: String },
-    name: { required, trim, type: String },
     path: { required, type: String },
   },
   hideOptions(),
@@ -28,7 +27,6 @@ ProjectSchema.pre('save', function (next: Function) {
 
 const FileSchema = new Schema<FileEntry>(
   {
-    name: { required, trim, type: String },
     path: { required, type: String },
     type: { required, type: String },
   },
