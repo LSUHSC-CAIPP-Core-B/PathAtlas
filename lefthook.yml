@@ -52,6 +52,9 @@ shared_commit_cmds: &shared_commit_cmds
     glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}"
     run: npx biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --colors=off {staged_files}
     staged_fixed: true
+  push_changes:
+    priority: 3
+    run: git add .
 
 pre-commit:
   piped: true
