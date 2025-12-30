@@ -1,10 +1,10 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { INDEX_FILES } from '../constants';
+import { resolveIndexes } from '../filesystem';
 import { getChecksums } from '../filesystem/processes';
 import type { EntryIndex } from '../filesystem/types';
 import { logProjectChanges } from './logging';
-import { resolveIndexes } from '../filesystem';
 
 type Project = {
   absolutePath: string;
@@ -16,26 +16,25 @@ export function manageProject(entry: EntryIndex) {
     ...entry,
   };
 
-  const parentPathRegExp = new RegExp(`^${entry.path}\/?`, 'gi');
+  const parentPathRegExp = new RegExp(`^${entry.path}/?`, 'gi');
 
   // console.log(project);
-  const checksums: EntryIndex[] = 
-    (project.status === 'DELETED' || project.status === 'ORIGINAL' ) ? [] :
-    getChecksums(project.path).map(sum => {
-      sum.path = sum.path.replace(parentPathRegExp, '');
-      return sum;
-    })
-
+  const checksums: EntryIndex[] =
+    project.status === 'DELETED' || project.status === 'ORIGINAL'
+      ? []
+      : getChecksums(project.path).map((sum) => {
+          sum.path = sum.path.replace(parentPathRegExp, '');
+          return sum;
+        });
 
   if (project.status === 'CREATED') createProject(project, checksums);
   else if (project.status === 'UPDATED') updateProject(project, checksums);
   else if (project.status === 'DELETED') removeProject(project, checksums);
 
-    // saveIndexes(project, checksums);
+  // saveIndexes(project, checksums);
 }
 
-function createProject(project: EntryIndex, entries: EntryIndex[]
-) {
+function createProject(project: EntryIndex, entries: EntryIndex[]) {
   const checksums = entries.map((sum) => {
     sum.status = 'CREATED';
     return sum;
@@ -48,7 +47,7 @@ function createProject(project: EntryIndex, entries: EntryIndex[]
 function updateProject(project: EntryIndex, entries: EntryIndex[]) {
   const prevEntries = fetchIndexes(project);
   const entryList = resolveIndexes(prevEntries, entries);
-  
+
   logProjectChanges(project, entryList);
 
   // TODO

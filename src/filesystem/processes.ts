@@ -58,7 +58,7 @@ function fetchFiles(
 
   // Time to filter out files based on the
   // .atlasignore file
-            return ATLAS_IGNORE.filter(paths);
+  return ATLAS_IGNORE.filter(paths);
 }
 
 function hashDirectory(directory: string) {
