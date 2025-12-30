@@ -37,6 +37,7 @@ function logEntryChange(
 
   // Add the remaining elements
   args.push(hash, path);
+  if (!isEntry) args.push(colors.gray('...'));
 
   LOGGER.log({
     args,

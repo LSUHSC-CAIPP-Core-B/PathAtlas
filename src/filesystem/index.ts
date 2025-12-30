@@ -46,7 +46,7 @@ export function resolveIndexes(oldIndexes: EntryIndex[], newIndexes: EntryIndex[
   return indexes;
 }
 
-function _saveIndexes(indexes: EntryIndex[]) {
+function saveIndexes(indexes: EntryIndex[]) {
   const content = JSON.stringify(indexes);
   writeFileSync(INDEX_FILES, content, { encoding: 'utf8' });
 }

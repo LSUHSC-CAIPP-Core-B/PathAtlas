@@ -4,6 +4,7 @@ import { INDEX_FILES } from '../constants';
 import { getChecksums } from '../filesystem/processes';
 import type { EntryIndex } from '../filesystem/types';
 import { logProjectChanges } from './logging';
+import { resolveIndexes } from '../filesystem';
 
 type Project = {
   absolutePath: string;
@@ -15,15 +16,27 @@ export function manageProject(entry: EntryIndex) {
     ...entry,
   };
 
-  // console.log(project);
+  const parentPathRegExp = new RegExp(`^${entry.path}\/?`, 'gi');
 
-  if (project.status === 'CREATED') createProject(project);
-  else if (project.status === 'UPDATED') updateProject(project);
-  else if (project.status === 'DELETED') removeProject(project);
+  // console.log(project);
+  const checksums: EntryIndex[] = 
+    (project.status === 'DELETED' || project.status === 'ORIGINAL' ) ? [] :
+    getChecksums(project.path).map(sum => {
+      sum.path = sum.path.replace(parentPathRegExp, '');
+      return sum;
+    })
+
+
+  if (project.status === 'CREATED') createProject(project, checksums);
+  else if (project.status === 'UPDATED') updateProject(project, checksums);
+  else if (project.status === 'DELETED') removeProject(project, checksums);
+
+    // saveIndexes(project, checksums);
 }
 
-function createProject(project: EntryIndex) {
-  const checksums = getChecksums(project.path).map((sum) => {
+function createProject(project: EntryIndex, entries: EntryIndex[]
+) {
+  const checksums = entries.map((sum) => {
     sum.status = 'CREATED';
     return sum;
   });
@@ -32,17 +45,21 @@ function createProject(project: EntryIndex) {
   logProjectChanges(project, checksums);
 }
 
-function updateProject(project: EntryIndex) {
+function updateProject(project: EntryIndex, entries: EntryIndex[]) {
+  const prevEntries = fetchIndexes(project);
+  const entryList = resolveIndexes(prevEntries, entries);
+  
+  logProjectChanges(project, entryList);
+
+  // TODO
+}
+
+function removeProject(project: EntryIndex, entries: EntryIndex[]) {
   logProjectChanges(project, []);
   // TODO
 }
 
-function removeProject(project: EntryIndex) {
-  logProjectChanges(project, []);
-  // TODO
-}
-
-function _fetchIndexes(project: EntryIndex): EntryIndex[] {
+function fetchIndexes(project: EntryIndex): EntryIndex[] {
   const indexFile = join(project.path, INDEX_FILES);
   if (!existsSync(indexFile)) return [];
 
@@ -50,7 +67,7 @@ function _fetchIndexes(project: EntryIndex): EntryIndex[] {
   return JSON.parse(content);
 }
 
-function _saveIndexes(project: EntryIndex, indexes: EntryIndex[]) {
+function saveIndexes(project: EntryIndex, indexes: EntryIndex[]) {
   const indexFile = join(project.path, INDEX_FILES);
   writeFileSync(indexFile, JSON.stringify(indexes));
 }
