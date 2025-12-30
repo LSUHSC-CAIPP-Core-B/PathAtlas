@@ -1,6 +1,8 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { INDEX_FILES } from '../constants';
+import { FileModel, ProjectModel } from '../database/schemas';
+import type { FileEntry } from '../database/types';
 import { resolveIndexes } from '../filesystem';
 import { getChecksums } from '../filesystem/processes';
 import type { EntryIndex } from '../filesystem/types';
@@ -10,7 +12,7 @@ type Project = {
   absolutePath: string;
 } & EntryIndex;
 
-export function manageProject(entry: EntryIndex) {
+export async function manageProject(entry: EntryIndex) {
   const project: Project = {
     absolutePath: resolve(entry.path),
     ...entry,
@@ -27,24 +29,42 @@ export function manageProject(entry: EntryIndex) {
           return sum;
         });
 
-  if (project.status === 'CREATED') createProject(project, checksums);
-  else if (project.status === 'UPDATED') updateProject(project, checksums);
-  else if (project.status === 'DELETED') removeProject(project, checksums);
+  if (project.status === 'CREATED') await createProject(project, checksums);
+  else if (project.status === 'UPDATED') await updateProject(project, checksums);
+  else if (project.status === 'DELETED') await removeProject(project, checksums);
 
   // saveIndexes(project, checksums);
 }
 
-function createProject(project: EntryIndex, entries: EntryIndex[]) {
+async function createProject(project: Project, entries: EntryIndex[]) {
   const checksums = entries.map((sum) => {
     sum.status = 'CREATED';
     return sum;
   });
-  // console.log(checksums);
 
   logProjectChanges(project, checksums);
+
+  return;
+
+  // TODO: Fix the issue with insertMany timing out
+
+  const createdOn = new Date();
+
+  const fileEntries: FileEntry[] = entries.map((entry) => {
+    const { path } = entry;
+    const type = path.replace(/^(?:[^.]+\.)+/gi, '');
+
+    return { changedOn: [], createdOn, path, type };
+  });
+
+  const filesObj = await FileModel.insertMany(fileEntries);
+  const fileIds = filesObj.map((file) => file._id);
+
+  const { absolutePath, hash, path } = project;
+  const projectObj = await ProjectModel.create({ absolutePath, files: fileIds, hash, path });
 }
 
-function updateProject(project: EntryIndex, entries: EntryIndex[]) {
+async function updateProject(project: Project, entries: EntryIndex[]) {
   const prevEntries = fetchIndexes(project);
   const entryList = resolveIndexes(prevEntries, entries);
 
@@ -53,12 +73,12 @@ function updateProject(project: EntryIndex, entries: EntryIndex[]) {
   // TODO
 }
 
-function removeProject(project: EntryIndex, entries: EntryIndex[]) {
+async function removeProject(project: Project, entries: EntryIndex[]) {
   logProjectChanges(project, []);
   // TODO
 }
 
-function fetchIndexes(project: EntryIndex): EntryIndex[] {
+function fetchIndexes(project: Project): EntryIndex[] {
   const indexFile = join(project.path, INDEX_FILES);
   if (!existsSync(indexFile)) return [];
 
@@ -66,7 +86,7 @@ function fetchIndexes(project: EntryIndex): EntryIndex[] {
   return JSON.parse(content);
 }
 
-function saveIndexes(project: EntryIndex, indexes: EntryIndex[]) {
+function saveIndexes(project: Project, indexes: EntryIndex[]) {
   const indexFile = join(project.path, INDEX_FILES);
   writeFileSync(indexFile, JSON.stringify(indexes));
 }

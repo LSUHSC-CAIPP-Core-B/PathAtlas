@@ -23,7 +23,9 @@ function prepareHashes(...hashArr: string[]): EntryIndex[] {
   // let's group them together.
   const hashes = hashArr.join('\n').split('\n');
 
-  return hashes.map((hash) => hash.split(/\s+/)).map(([hash, path]) => ({ hash, path }));
+  return hashes
+    .map((hash) => hash.split(/(?<=[\da-f])\s+/))
+    .map(([hash, path]) => ({ hash, path }));
 }
 
 function preparePaths(isDirectory: boolean, ...pathArr: string[]) {
@@ -61,6 +63,13 @@ function fetchFiles(
   return ATLAS_IGNORE.filter(paths);
 }
 
+function prepareFilesForCmds(...files: string[]) {
+  return files
+    .filter((f) => !!f)
+    .map((f) => `"${f}"`)
+    .join(' ');
+}
+
 function hashDirectory(directory: string) {
   // Get all the files in the directory.
   const files = fetchFiles(false, directory);
@@ -68,7 +77,7 @@ function hashDirectory(directory: string) {
   // hash of the directory name.
   if (!files || files.length === 0) return `${quickHash('sha256', directory)}  -`;
 
-  const paths = files.join(' ');
+  const paths = prepareFilesForCmds(...files);
   // We got files, let's hash them all
   return runProcess(`find ${paths} -type f -exec sha256sum {} + | sort | sha256sum`);
 }
@@ -93,18 +102,12 @@ export function getChecksums(directory?: string) {
     const files = fetchFiles(false, directory);
     if (!files || files.length === 0) return;
 
-    const fileSerialized = files
-      .filter((f) => !!f)
-      .map((f) => `"${f}"`)
-      .join(' ');
-
-    const sums = runProcess(`find ${fileSerialized} -exec sha256sum {} +`);
+    const path = prepareFilesForCmds(...files);
+    // We git files, let's hash them all
+    const sums = runProcess(`find ${path} -exec sha256sum {} +`);
 
     return prepareHashes(sums);
   }
-
-  //   const result = runProcess('find . -type f -exec sha256sum {} +');
-  //   console.log(result);
 }
 
 function runProcess(cmd: string, ...args: string[]) {

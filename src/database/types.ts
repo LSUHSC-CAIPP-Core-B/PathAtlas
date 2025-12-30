@@ -1,11 +1,10 @@
 import type { Types } from 'mongoose';
 
 export type MongoEntry = {
-  _id: Types.ObjectId;
+  _id?: Types.ObjectId;
 };
 
 export type HashedEntry = {
-  name: string;
   hash: string;
   path: string;
   absolutePath: string;
@@ -13,7 +12,6 @@ export type HashedEntry = {
 } & MongoEntry;
 
 export type FileEntry = {
-  name: string;
   type: string;
   path: string;
   createdOn: Date;
