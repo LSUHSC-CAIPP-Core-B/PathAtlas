@@ -58,7 +58,7 @@ function fetchFiles(
 
   // Time to filter out files based on the
   // .atlasignore file
-  return ATLAS_IGNORE.filter(paths);
+            return ATLAS_IGNORE.filter(paths);
 }
 
 function hashDirectory(directory: string) {
@@ -95,16 +95,10 @@ export function getChecksums(directory?: string) {
 
     const fileSerialized = files
       .filter((f) => !!f)
-      .map((f) => `${f}"`)
+      .map((f) => `"${f}"`)
       .join(' ');
 
     const sums = runProcess(`find ${fileSerialized} -exec sha256sum {} +`);
-
-    // TODO: Implement SHA256 on each sha256sum based on paths as well
-
-    // | while IFS= read -r line; do
-    // printf "%s" "$line" | sha256sum | cut -d ' ' -f 1
-    // done
 
     return prepareHashes(sums);
   }

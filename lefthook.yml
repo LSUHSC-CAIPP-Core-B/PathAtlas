@@ -42,13 +42,21 @@
 #       runner: go run
 
 shared_commit_cmds: &shared_commit_cmds
-  check:
+  format:
+    ppriority: 1
     glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}"
-    run: yarn exec biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --colors=off {staged_files}
+    run: npx biome format --write --no-errors-on-unmatched --files-ignore-unknown=true --colors=off {staged_files}
+    staged_fixed: true
+  check:
+    priority: 2
+    glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}"
+    run: npx biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --colors=off {staged_files}
     staged_fixed: true
 
 pre-commit:
+  piped: true
   commands: *shared_commit_cmds
 
 pre-merge-commit:
+  piped: true
   commands: *shared_commit_cmds
