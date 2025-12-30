@@ -47,8 +47,10 @@ function logEntryChange(
 }
 
 export function logProjectChanges(project: EntryIndex, indexes: EntryIndex[]) {
-  const doesOverflow = indexes.length > LIMIT_FILES_TO_LOG;
-  const entries = indexes.slice(0, LIMIT_FILES_TO_LOG);
+  const filteredIndexes = indexes.filter((entry) => entry.status !== 'ORIGINAL');
+
+  const doesOverflow = filteredIndexes.length > LIMIT_FILES_TO_LOG;
+  const entries = filteredIndexes.slice(0, LIMIT_FILES_TO_LOG);
 
   const projectHash = project.hash.slice(-8);
   logEntryChange(project.status, colors.gray(projectHash), project.path, false);
@@ -60,7 +62,10 @@ export function logProjectChanges(project: EntryIndex, indexes: EntryIndex[]) {
 
   if (doesOverflow) {
     LOGGER.log({
-      args: [colors.gray('|'), colors.gray(`and ${indexes.length - LIMIT_FILES_TO_LOG} others`)],
+      args: [
+        colors.gray('|'),
+        colors.gray(`and ${filteredIndexes.length - LIMIT_FILES_TO_LOG} others`),
+      ],
       message: '%s %s',
       type: LogTypes.info,
     });
