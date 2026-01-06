@@ -20,7 +20,7 @@ urlObject.host = DATABASE_URL;
 urlObject.pathname = DATABASE_NAME;
 
 searchParams.set('appName', APP_NAME);
-searchParams.set('authSource', 'admin');
+// searchParams.set('authSource', 'admin');
 
 let _logLimit = 10;
 try {

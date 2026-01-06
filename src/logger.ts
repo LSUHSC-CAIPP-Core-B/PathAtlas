@@ -10,7 +10,7 @@ function formatNumber(digit: number) {
 
 function getDateString(date = new Date()) {
   const year = date.getFullYear(),
-    month = date.getMonth(),
+    month = date.getMonth() + 1,
     day = date.getDate();
 
   return [year, month, day].map(formatNumber).join('-');

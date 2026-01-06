@@ -59,7 +59,6 @@ export function fetchIndexes() {
   // index them.
   const indexes = resolveIndexes(prevIndexes, currentIndexed);
 
-  // TODO: Uncomment this after testing
-  // saveIndexes(indexes);
+  saveIndexes(indexes);
   return indexes;
 }

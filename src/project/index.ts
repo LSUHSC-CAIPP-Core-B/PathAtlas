@@ -44,24 +44,25 @@ async function createProject(project: Project, entries: EntryIndex[]) {
 
   logProjectChanges(project, checksums);
 
-  return;
-
-  // TODO: Fix the issue with insertMany timing out
-
   const createdOn = new Date();
 
   const fileEntries: FileEntry[] = entries.map((entry) => {
-    const { path } = entry;
-    const type = path.replace(/^(?:[^.]+\.)+/gi, '');
+    const { path, hash } = entry;
 
-    return { changedOn: [], createdOn, path, type };
+    const name = path.split('/').pop();
+    const type = name.includes('.') ? name.split('.').pop() : 'txt';
+
+    return { changedOn: [], createdOn, hash, path, type };
   });
 
-  const filesObj = await FileModel.insertMany(fileEntries);
+  const filesObj: FileEntry[] = await FileModel.insertMany(fileEntries);
   const fileIds = filesObj.map((file) => file._id);
 
   const { absolutePath, hash, path } = project;
-  const projectObj = await ProjectModel.create({ absolutePath, files: fileIds, hash, path });
+  await ProjectModel.create({ absolutePath, files: fileIds, hash, path });
+
+  const files = filesObj.map(({ hash, path, _id }) => ({ hash, id: _id?.toString(), path }));
+  saveIndexes(project, files);
 }
 
 async function updateProject(project: Project, entries: EntryIndex[]) {
