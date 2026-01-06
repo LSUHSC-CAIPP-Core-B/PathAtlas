@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { Types } from 'mongoose';
 import { INDEX_FILES } from '../constants';
 import { FileModel, ProjectModel } from '../database/schemas';
 import type { FileEntry } from '../database/types';
@@ -24,14 +25,14 @@ export async function manageProject(entry: EntryIndex) {
   const checksums: EntryIndex[] =
     project.status === 'DELETED' || project.status === 'ORIGINAL'
       ? []
-      : getChecksums(project.path).map((sum) => {
+      : getChecksums(project.path)?.map((sum) => {
           sum.path = sum.path.replace(parentPathRegExp, '');
           return sum;
-        });
+        }) || [];
 
   if (project.status === 'CREATED') await createProject(project, checksums);
   else if (project.status === 'UPDATED') await updateProject(project, checksums);
-  else if (project.status === 'DELETED') await removeProject(project, checksums);
+  else if (project.status === 'DELETED') await removeProject(project);
 
   // saveIndexes(project, checksums);
 }
@@ -44,24 +45,20 @@ async function createProject(project: Project, entries: EntryIndex[]) {
 
   logProjectChanges(project, checksums);
 
-  const createdOn = new Date();
+  let fileEntries: FileEntry[] = entries.map(processEntry);
+  const fileIds: Types.ObjectId[] = [];
 
-  const fileEntries: FileEntry[] = entries.map((entry) => {
-    const { path, hash } = entry;
-
-    const name = path.split('/').pop();
-    const type = name.includes('.') ? name.split('.').pop() : 'txt';
-
-    return { changedOn: [], createdOn, hash, path, type };
-  });
-
-  const filesObj: FileEntry[] = await FileModel.insertMany(fileEntries);
-  const fileIds = filesObj.map((file) => file._id);
+  if (fileEntries.length > 0) {
+    fileEntries = await FileModel.insertMany(fileEntries);
+    fileIds.push(...fileEntries.map((file) => file._id));
+  } else {
+    fileEntries = [];
+  }
 
   const { absolutePath, hash, path } = project;
   await ProjectModel.create({ absolutePath, files: fileIds, hash, path });
 
-  const files = filesObj.map(({ hash, path, _id }) => ({ hash, id: _id?.toString(), path }));
+  const files = fileEntries.map(({ hash, path, _id }) => ({ hash, id: _id?.toString(), path }));
   saveIndexes(project, files);
 }
 
@@ -71,12 +68,82 @@ async function updateProject(project: Project, entries: EntryIndex[]) {
 
   logProjectChanges(project, entryList);
 
-  // TODO
+  // Get unchanged ids
+  const projectEntries = entryList.filter(
+    ({ status }) => status === 'ORIGINAL' || status === 'UPDATED',
+  );
+
+  const fileIds: Types.ObjectId[] = projectEntries
+    .map(({ id }) => id)
+    .map(Types.ObjectId.createFromHexString);
+
+  const deletedEntryIds: Types.ObjectId[] = entryList
+    .filter(({ status }) => status === 'DELETED')
+    .map(({ id }) => id)
+    .map(Types.ObjectId.createFromHexString);
+
+  const createdEntries: FileEntry[] = entryList
+    .filter(({ status }) => status === 'CREATED')
+    .map(processEntry);
+
+  const changedEntries = entryList
+    .filter(({ status }) => status === 'UPDATED')
+    .map(({ id, hash }) => ({ hash, id: Types.ObjectId.createFromHexString(id) }));
+
+  if (createdEntries.length > 0) {
+    const createdObj = await FileModel.insertMany(createdEntries);
+    const createdIds = createdObj.map((file) => file._id);
+    fileIds.push(...createdIds);
+
+    const createdFiles = createdObj.map(({ hash, path, _id }) => ({
+      hash,
+      id: _id?.toString(),
+      path,
+    }));
+    projectEntries.push(...createdFiles);
+  }
+
+  if (deletedEntryIds.length > 0) {
+    await FileModel.deleteMany({ _id: deletedEntryIds });
+  }
+
+  if (changedEntries.length > 0) {
+    FileModel.bulkWrite(
+      changedEntries.map((item) => ({
+        updateOne: {
+          filter: { _id: item.id },
+          update: {
+            $set: { hash: item.hash },
+          },
+        },
+      })),
+    );
+  }
+
+  const { absolutePath, hash } = project;
+  await ProjectModel.updateOne({ absolutePath }, { files: fileIds, hash });
+
+  saveIndexes(project, projectEntries);
 }
 
-async function removeProject(project: Project, entries: EntryIndex[]) {
+async function removeProject(project: Project) {
   logProjectChanges(project, []);
-  // TODO
+
+  const { absolutePath } = project;
+
+  // const fileIds = entries.map(({ id }) => id).map(Types.ObjectId.createFromHexString);
+  const fileIds = await ProjectModel.aggregate([{ $match: { absolutePath } }, { $limit: 1 }]);
+  if (fileIds[0]?.files != null) await FileModel.deleteMany({ _id: fileIds[0]?.files });
+  await ProjectModel.deleteOne({ absolutePath });
+}
+
+function processEntry(entry: EntryIndex) {
+  const { path, hash } = entry;
+
+  const name = path.split('/').pop();
+  const type = name.includes('.') ? name.split('.').pop() : 'txt';
+
+  return { changedOn: [], createdOn: new Date(), hash, path, type };
 }
 
 function fetchIndexes(project: Project): EntryIndex[] {

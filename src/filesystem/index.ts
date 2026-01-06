@@ -25,6 +25,8 @@ export function resolveIndexes(oldIndexes: EntryIndex[], newIndexes: EntryIndex[
   // creating new ones as we find them
   if (newIndexes && newIndexes.length > 0)
     for (const index of newIndexes) {
+      if (index == null) continue;
+
       // Look up if the index already exists
       const lookup = indexes.find((i) => i.path === index.path);
       if (lookup) {

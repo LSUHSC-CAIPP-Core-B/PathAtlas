@@ -2,7 +2,6 @@ import { model, Schema, type SchemaOptions } from 'mongoose';
 import type { FileEntry, HashedEntry, MongoEntry } from './types';
 
 const required = true,
-  trim = true,
   unique = true;
 
 const ProjectSchema = new Schema<HashedEntry>(
