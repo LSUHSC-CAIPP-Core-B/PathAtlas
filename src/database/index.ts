@@ -12,7 +12,8 @@ let connection: Mongoose;
 
 export async function connectDB() {
   try {
-    LOGGER.start(`MongoDB connecting to: ${DATABASE_URL}`);
+    LOGGER.info(`MongoDB connecting to: ${DATABASE_URL}`);
+    LOGGER.start(`Connecting to MongoDB...`);
     connection = await mongoose.connect(COMPLETE_DATABASE_URL, {
       auth: {
         password: DATABASE_PASS,
@@ -20,7 +21,7 @@ export async function connectDB() {
       },
       dbName: DATABASE_NAME,
     });
-    LOGGER.success('MongoDB connected');
+    LOGGER.success('Connected to MongoDB!');
   } catch (e) {
     LOGGER.error(e);
     process.exit(1);
@@ -28,7 +29,8 @@ export async function connectDB() {
 }
 
 export async function disconnectDB() {
-  LOGGER.log('Disconnecting from database');
+  LOGGER.start('Disconnecting from MongoDB...');
   await connection.disconnect();
+  LOGGER.success('Disconnected from MongoDB!');
   process.exit(0);
 }

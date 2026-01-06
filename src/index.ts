@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { INDEX_FILES } from './constants';
-import { connectDB } from './database';
+import { connectDB, disconnectDB } from './database';
 // import { connectDB } from './database';
 import { fetchIndexes } from './filesystem';
 import { LOGGER } from './logger';
@@ -43,5 +43,11 @@ import { manageProject } from './project';
   LOGGER.log('');
   LOGGER.start('Syncing changes...');
 
-  for (const changed of changedIndexes) manageProject(changed);
+  for (const changed of changedIndexes) await manageProject(changed);
+
+  LOGGER.log('');
+  LOGGER.success('Synced changes!');
+  LOGGER.info('Exiting...');
+
+  await disconnectDB();
 })();

@@ -23,3 +23,6 @@ indexes.json
 
 # logs
 logs/
+
+# operating system files
+.DS_Store

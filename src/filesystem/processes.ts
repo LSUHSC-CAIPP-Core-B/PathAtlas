@@ -24,7 +24,7 @@ function prepareHashes(...hashArr: string[]): EntryIndex[] {
   const hashes = hashArr.join('\n').split('\n');
 
   return hashes
-    .map((hash) => hash.split(/(?<=[\da-f])\s+/))
+    .map((hash) => hash.split(/(?<=[\da-f]{64})\s+/))
     .map(([hash, path]) => ({ hash, path }));
 }
 
@@ -49,7 +49,7 @@ function fetchFiles(
   // Let's get all the paths and remove the
   // relative path prefix `./`
   const results = runProcess(
-    `find ${directory} -type ${filterDirectory ? 'd' : 'f'}`,
+    `find "${directory}" -type ${filterDirectory ? 'd' : 'f'}`,
     maxdepth > 0 ? `-maxdepth ${maxdepth}` : '',
   );
   const paths = preparePaths(filterDirectory, results);
