@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { INDEX_FILES } from './constants';
+import { connectDB } from './database';
 // import { connectDB } from './database';
 import { fetchIndexes } from './filesystem';
 import { LOGGER } from './logger';
@@ -35,8 +36,8 @@ import { manageProject } from './project';
 
   // Start the database so we can sync
   // all the changes that have been made
-  // LOGGER.log('');
-  // await connectDB();
+  LOGGER.log('');
+  await connectDB();
 
   // Start the syncing process
   LOGGER.log('');

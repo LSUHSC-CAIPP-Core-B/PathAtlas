@@ -12,6 +12,7 @@ export type HashedEntry = {
 } & MongoEntry;
 
 export type FileEntry = {
+  hash: string;
   type: string;
   path: string;
   createdOn: Date;
