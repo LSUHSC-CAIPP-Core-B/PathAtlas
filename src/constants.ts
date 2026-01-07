@@ -8,6 +8,7 @@ const {
   DATABASE_USER,
   DATABASE_PASS,
   DATABASE_NAME,
+  TARGET_DIRECTORY: targetFolder,
   INDEX_FILES: indexFile,
   LIMIT_FILES_TO_LOG: fileLogLimit,
 } = process.env;
@@ -33,5 +34,6 @@ export const LIMIT_FILES_TO_LOG = _logLimit;
 export const COMPLETE_DATABASE_URL = urlObject.toString().replace(/^[^:]+/g, dbProtocol || 'mongo');
 
 export const INDEX_FILES = indexFile || 'indexes.json';
+export const TARGET_DIRECTORY = targetFolder || '.';
 
 export { APP_NAME, DATABASE_NAME, DATABASE_USER, DATABASE_PASS, DATABASE_URL };

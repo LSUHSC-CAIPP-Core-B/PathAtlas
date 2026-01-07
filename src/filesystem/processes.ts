@@ -3,7 +3,7 @@ import { hash as quickHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join as joinPaths } from 'node:path';
 import ignore from 'ignore';
-import { INDEX_FILES } from '../constants';
+import { INDEX_FILES, TARGET_DIRECTORY } from '../constants';
 import type { EntryIndex } from './types';
 
 const ROOT = process.cwd();
@@ -114,6 +114,7 @@ function runProcess(cmd: string, ...args: string[]) {
   try {
     const cmdArguments = args.map((a) => ' '.concat(a));
     return execSync(cmd.concat(...cmdArguments), {
+      cwd: TARGET_DIRECTORY,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     }).trim();

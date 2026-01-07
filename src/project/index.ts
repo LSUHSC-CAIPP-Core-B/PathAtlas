@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { Types } from 'mongoose';
 import { INDEX_FILES } from '../constants';
@@ -129,7 +129,8 @@ async function updateProject(project: Project, entries: EntryIndex[]) {
 async function removeProject(project: Project) {
   logProjectChanges(project, []);
 
-  const { absolutePath } = project;
+  const { absolutePath, path } = project;
+  if (existsSync(path)) rmSync(path, { force: true, recursive: true });
 
   // const fileIds = entries.map(({ id }) => id).map(Types.ObjectId.createFromHexString);
   const fileIds = await ProjectModel.aggregate([{ $match: { absolutePath } }, { $limit: 1 }]);
@@ -155,6 +156,7 @@ function fetchIndexes(project: Project): EntryIndex[] {
 }
 
 function saveIndexes(project: Project, indexes: EntryIndex[]) {
+  if (!existsSync(project.path)) mkdirSync(project.path, { recursive: true });
   const indexFile = join(project.path, INDEX_FILES);
   writeFileSync(indexFile, JSON.stringify(indexes));
 }
