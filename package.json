@@ -25,9 +25,8 @@
   "private": true,
   "repository": "https://github.com/LSUHSC-CAIPP-Core-B/PathAtlas",
   "scripts": {
-    "build": "./scripts/build.sh",
     "dev": "nodemon",
-    "start": "node dist/index.js"
+    "start": "./file_atlas.sh"
   },
   "version": "1.0.0"
 }
