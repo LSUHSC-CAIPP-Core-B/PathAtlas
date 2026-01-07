@@ -10,29 +10,29 @@ PACKAGE_FILE="package.json";
 
 BUILD_DIRECTORY="build";
 BUNDLED_FILE="bundle.js";
-SCRIPT_FILE="file_atlas.sh";
+SCRIPT_FILE="path_atlas.sh";
 
 
 check_file() {
-    local file=$1;
-    local error=${2:-"This file does not exist."};
+  local file=$1;
+  local error=${2:-"This file does not exist."};
 
-    [ ! -f "$file" ] \
-        && echo "" \
-        && echo -e "${RED}ERROR:${NC} ${file} file does not exist!" \
-        && echo -e "${GRAY}###${NC} ${error}" \
-        && exit 1;
+  [ ! -f "$file" ] \
+    && echo "" \
+    && echo -e "${RED}ERROR:${NC} ${file} file does not exist!" \
+    && echo -e "${GRAY}###${NC} ${error}" \
+    && exit 1;
 }
 
 check_directory() {
-    local directory=$1;
-    local error=${2:-"This file does not exist."};
+  local directory=$1;
+  local error=${2:-"This file does not exist."};
 
-    [ ! -d "$directory" ] \
-        && echo "" \
-        && echo -e "${RED}ERROR:${NC} ${directory} directory does not exist!" \
-        && echo -e "${GRAY}###${NC} ${error}" \
-        && exit 1;
+  [ ! -d "$directory" ] \
+    && echo "" \
+    && echo -e "${RED}ERROR:${NC} ${directory} directory does not exist!" \
+    && echo -e "${GRAY}###${NC} ${error}" \
+    && exit 1;
 }
 
 
@@ -49,10 +49,12 @@ npx webpack
 check_directory $BUILD_DIRECTORY "There could have been an issue with building with webpack.";
 check_file "${BUILD_DIRECTORY}/${BUNDLED_FILE}" "Make sure this script is being ran from the base directory.";
 
-# Let's create a runnable script
-echo "#!/usr/bin/env node" > $BUILD_DIRECTORY/$SCRIPT_FILE;
-cat $BUILD_DIRECTORY/$BUNDLED_FILE >> $BUILD_DIRECTORY/$SCRIPT_FILE;
-chmod +x $BUILD_DIRECTORY/$SCRIPT_FILE;
+# Check if the sample runnable script exists
+check_file "./scripts/${SCRIPT_FILE}" "The ${SCRIPT_FILE} script file couldn't be found";
+
+# Let's copy the runnable script
+cp "./scripts/${SCRIPT_FILE}" "${BUILD_DIRECTORY}/${SCRIPT_FILE}";
+chmod +x "${BUILD_DIRECTORY}/${SCRIPT_FILE}";
 
 # Let's copy all needed the items into the build folder
 cp ./package.json ./.atlasignore ./build/;

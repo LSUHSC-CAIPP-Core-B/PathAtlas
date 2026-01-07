@@ -17,13 +17,13 @@ Connecting to the Mongo Shell and opening a database
 
 ```bash
 $ mongosh
-$ use file-atlas
+$ use path-atlas
 ```
 
 Let's create a user to be used.
 
 ```bash
-$ db.createUser({ user: "file-atlas", pwd: passwordPrompt(), roles: [ { role: "readWrite", db: "file-atlas" } ] })
+$ db.createUser({ user: "path-atlas", pwd: passwordPrompt(), roles: [ { role: "readWrite", db: "path-atlas" } ] })
 ```
 
 Let's verify if the user exists
