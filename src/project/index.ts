@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { Types } from 'mongoose';
-import { INDEX_FILES } from '../constants';
+import { INDEX_FILES, TARGET_DIRECTORY } from '../constants';
 import { FileModel, ProjectModel } from '../database/schemas';
 import type { FileEntry } from '../database/types';
 import { resolveIndexes } from '../filesystem';
@@ -15,7 +15,7 @@ type Project = {
 
 export async function manageProject(entry: EntryIndex) {
   const project: Project = {
-    absolutePath: resolve(entry.path),
+    absolutePath: resolve(TARGET_DIRECTORY, entry.path),
     ...entry,
   };
 
