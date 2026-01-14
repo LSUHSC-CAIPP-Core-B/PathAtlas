@@ -5,7 +5,6 @@ import { INDEX_FILES, TARGET_DIRECTORY } from '../constants';
 import { FileModel, ProjectModel } from '../database/schemas';
 import type { FileEntry } from '../database/types';
 import { resolveIndexes } from '../filesystem';
-import { getChecksums } from '../filesystem/processes';
 import type { EntryIndex } from '../filesystem/types';
 import { logProjectChanges } from './logging';
 
@@ -13,23 +12,14 @@ type Project = {
   absolutePath: string;
 } & EntryIndex;
 
-export async function manageProject(entry: EntryIndex) {
+export async function manageProject(entry: EntryIndex, checksums: EntryIndex[]) {
   const project: Project = {
     absolutePath: resolve(TARGET_DIRECTORY, entry.path),
     ...entry,
   };
 
-  const parentPathRegExp = new RegExp(`^${entry.path}/?`, 'gi');
-
-  // console.log(project);
-  const checksums: EntryIndex[] =
-    project.status === 'DELETED' || project.status === 'ORIGINAL'
-      ? []
-      : getChecksums(project.path)?.map((sum) => {
-          sum.path = sum.path.replace(parentPathRegExp, '');
-          return sum;
-        }) || [];
-
+  // Let's change the project based on
+  // the status change
   if (project.status === 'CREATED') await createProject(project, checksums);
   else if (project.status === 'UPDATED') await updateProject(project, checksums);
   else if (project.status === 'DELETED') await removeProject(project);

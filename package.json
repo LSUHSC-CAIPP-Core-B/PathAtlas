@@ -3,7 +3,8 @@
   "dependencies": {
     "consola": "^3.4.2",
     "ignore": "^7.0.5",
-    "mongoose": "^9.0.2"
+    "mongoose": "^9.0.2",
+    "mri": "^1.2.0"
   },
   "description": "A database implementation for handling localized files",
   "devDependencies": {
