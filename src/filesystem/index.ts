@@ -1,6 +1,7 @@
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { INDEX_FILES } from '../constants';
-import { getChecksums } from './processes';
+import { fetchFiles } from './processes';
 import type { EntryIndex } from './types';
 
 function loadIndexFile(): EntryIndex[] {
@@ -53,13 +54,48 @@ function saveIndexes(indexes: EntryIndex[]) {
   writeFileSync(INDEX_FILES, content, { encoding: 'utf8' });
 }
 
-export function fetchIndexes() {
+function hashProject$single(project: string, entries: EntryIndex[]) {
+  const hash = createHash('sha256').update(project);
+
+  const sortedEntries = entries.sort((a, b) => a.path.localeCompare(b.path));
+  for (const entry of sortedEntries) hash.update(entry.path).update(entry.hash);
+
+  return hash.digest('hex');
+}
+
+function hashProjects(projectEntries: Record<string, EntryIndex[]>) {
+  if (projectEntries == null) return [];
+
+  return Object.entries(projectEntries)
+    .map(([project, entries]) => [project, hashProject$single(project, entries)])
+    .reduce((obj: EntryIndex[], [path, hash]) => {
+      obj.push({ hash, path: path.concat('/') });
+      return obj;
+    }, []);
+}
+
+export function fetchIndexes(
+  projectEntries: Record<string, EntryIndex[]>,
+  filteredProjects: string[] = [],
+) {
+  const FILTER = filteredProjects.length === 0 ? ['.'] : filteredProjects;
+
+  // Let's get the filtered project paths
+  // and the previous hashed indexes
+  const projectPaths = fetchFiles(true, FILTER, 1, false);
   const prevIndexes: EntryIndex[] = loadIndexFile();
-  const currentIndexed: EntryIndex[] = getChecksums();
+
+  // Let's create the new hashed indexes
+  // and keep old hashes that we aren't
+  // looking over.
+  const hashedEntries = hashProjects(projectEntries);
+  const currentIndexes = prevIndexes
+    .filter((index) => !(!projectPaths || projectPaths.includes(index.path)))
+    .concat(hashedEntries);
 
   // Let's resolve the projects and
   // index them.
-  const indexes = resolveIndexes(prevIndexes, currentIndexed);
+  const indexes = resolveIndexes(prevIndexes, currentIndexes);
 
   saveIndexes(indexes);
   return indexes;
