@@ -3,6 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { INDEX_FILES } from '../constants';
 import { fetchFiles } from './processes';
 import type { EntryIndex } from './types';
+import { getFolders } from './utils';
 
 function loadIndexFile(): EntryIndex[] {
   if (!existsSync(INDEX_FILES)) return [];
@@ -76,13 +77,14 @@ function hashProjects(projectEntries: Record<string, EntryIndex[]>) {
 
 export function fetchIndexes(
   projectEntries: Record<string, EntryIndex[]>,
-  filteredProjects: string[] = [],
+  projects: string[] = [],
 ) {
-  const FILTER = filteredProjects.length === 0 ? ['.'] : filteredProjects;
+  if (projects.length === 0) projects = getFolders();
+  if (projects.length === 0) return [];
 
   // Let's get the filtered project paths
   // and the previous hashed indexes
-  const projectPaths = fetchFiles(true, FILTER, 1, false);
+  const projectPaths = fetchFiles(true, projects, 1, false);
   const prevIndexes: EntryIndex[] = loadIndexFile();
 
   // Let's create the new hashed indexes
