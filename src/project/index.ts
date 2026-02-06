@@ -40,7 +40,7 @@ async function createProject(project: Project, entries: EntryIndex[]) {
 
   if (fileEntries.length > 0) {
     fileEntries = await FileModel.insertMany(fileEntries);
-    fileIds.push(...fileEntries.map((file) => file._id));
+    fileIds.push(...fileEntries.map((file) => file._id).filter((id) => id != null));
   } else {
     fileEntries = [];
   }
@@ -64,12 +64,14 @@ async function updateProject(project: Project, entries: EntryIndex[]) {
   );
 
   const fileIds: Types.ObjectId[] = projectEntries
-    .map(({ id }) => id)
+    .map(({ id }) => id || '')
+    .filter(Boolean)
     .map(Types.ObjectId.createFromHexString);
 
   const deletedEntryIds: Types.ObjectId[] = entryList
     .filter(({ status }) => status === 'DELETED')
-    .map(({ id }) => id)
+    .map(({ id }) => id || '')
+    .filter(Boolean)
     .map(Types.ObjectId.createFromHexString);
 
   const createdEntries: FileEntry[] = entryList
@@ -77,8 +79,8 @@ async function updateProject(project: Project, entries: EntryIndex[]) {
     .map(processEntry);
 
   const changedEntries = entryList
-    .filter(({ status }) => status === 'UPDATED')
-    .map(({ id, hash }) => ({ hash, id: Types.ObjectId.createFromHexString(id) }));
+    .filter(({ status, id }) => status === 'UPDATED' && id != null)
+    .map(({ id, hash }) => ({ hash, id: Types.ObjectId.createFromHexString(id as string) }));
 
   if (createdEntries.length > 0) {
     const createdObj = await FileModel.insertMany(createdEntries);
@@ -132,7 +134,7 @@ function processEntry(entry: EntryIndex) {
   const { path, hash } = entry;
 
   const name = path.split('/').pop();
-  const type = name.includes('.') ? name.split('.').pop() : 'txt';
+  const type = (name?.includes('.') ? name.split('.').pop() : 'txt') || 'txt';
 
   return { changedOn: [], createdOn: new Date(), hash, path, type };
 }

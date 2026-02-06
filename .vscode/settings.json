@@ -13,5 +13,5 @@
     "source.fixAll.biome": "explicit"
   },
   "editor.formatOnSave": true,
-  "files.autoSave": "onWindowChange"
+  "files.autoSave": "off"
 }

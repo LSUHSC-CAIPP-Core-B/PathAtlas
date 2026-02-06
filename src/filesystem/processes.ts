@@ -1,44 +1,38 @@
-import { execSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { join as joinPaths, resolve } from 'node:path';
-import ignore from 'ignore';
-import { INDEX_FILES, TARGET_DIRECTORY } from '../constants';
+import { type ExecException, execSync } from 'node:child_process';
+import { existsSync, statSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { TARGET_DIRECTORY } from '../constants';
 import type { EntryIndex } from './types';
-
-const ROOT = process.cwd();
-const ATLAS_IGNORE = createAltasIgnore();
-
-function createAltasIgnore() {
-  // Let's load in the .atlasignore file
-  // and prepare for filtering out files
-  const ignoreFile = joinPaths(ROOT, '.atlasignore');
-  const contents = readFileSync(ignoreFile, { encoding: 'utf8' }).toString();
-
-  return ignore().add(contents).add(`**/${INDEX_FILES}`);
-}
+import { ATLAS_IGNORE, getFolders } from './utils';
 
 function prepareHashes(...hashArr: string[]): EntryIndex[] {
   // We might get a bunch of hashes or nothing,
   // let's group them together.
-  const hashes = hashArr.join('\n').split('\n');
 
-  return hashes
+  return hashArr
+    .flatMap((hashes) => hashes.split('\n'))
+    .map((hash) => hash.trim())
+    .filter(Boolean)
     .map((hash) => hash.split(/(?<=[\da-f]{64})\s+/))
     .map(([hash, path]) => ({ hash, path }));
 }
 
 function preparePaths(isDirectory: boolean, prepPaths: boolean, ...pathArr: string[]) {
-  // We get both a single path and multiple paths,
-  // join them and split them out again.
-  const paths = pathArr.join('\n').split('\n');
+  // We can get both a single path and multiple paths,
+  // so we need to split them out. (flatMap)
+
   // If the path has the relative prefix `./`
   // then remove the prefix. Also, let's get
   // rid of the "relative" roots
-  return paths
-    .map((path) => path.replace(/^\.\//g, ''))
-    .filter((path) => path?.length > 0)
-    .map((path) => path + (isDirectory ? '/' : ''))
-    .filter((path) => path && !(prepPaths && path.match(/^(?:.\/)?$/)));
+  const paths = pathArr
+    .flatMap((paths) => paths.split('\n'))
+    .map((path) => path.replace(/^\.\/+/g, ''))
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((path) => path.replace(/\/*$/, isDirectory ? '/' : '').trim())
+    .filter((path) => !(prepPaths && path === ''));
+
+  return paths;
 }
 
 export function fetchFiles(
@@ -48,20 +42,23 @@ export function fetchFiles(
   prepPaths: boolean = true,
 ) {
   // Let's check if the path exists before doing anything
-  const directories = directoryPaths.filter((directory) =>
-    existsSync(resolve(TARGET_DIRECTORY, directory)),
-  );
+  const directories = directoryPaths
+    .map((directory) => [directory, resolve(TARGET_DIRECTORY, directory)])
+    .filter(([, absolute]) => existsSync(absolute) && statSync(absolute).isDirectory())
+    .map(([directory]) => directory);
+
   if (directories.length === 0) return null;
 
   // Let's get all the paths and remove the
   // relative path prefix `./`
   const prepared = preparePaths(filterDirectory, prepPaths, ...directories);
+  const filtered = ATLAS_IGNORE.filter(prepared);
+  if (filtered.length === 0) return null;
 
-  const results = runProcess(
-    `find ${prepared} -type ${filterDirectory ? 'd' : 'f'}`,
-    maxdepth > 0 ? `-maxdepth ${maxdepth}` : '',
-  );
+  const dirArgs = filtered.map((d) => `"${d}"`).join(' ');
+  const depthArg = maxdepth > 0 ? ` -maxdepth ${maxdepth}` : '';
 
+  const results = runProcess(`find ${dirArgs}${depthArg} -type ${filterDirectory ? 'd' : 'f'}`);
   const paths = preparePaths(filterDirectory, true, results);
 
   // Let's check we have a file before filtering,
@@ -75,7 +72,7 @@ export function fetchFiles(
 
 function prepareFilesForCmds(...files: string[]) {
   return files
-    .filter((f) => !!f)
+    .filter(Boolean)
     .map((f) => `"${f}"`)
     .join(' ');
 }
@@ -112,14 +109,15 @@ function groupSums(obj: Record<string, EntryIndex[]>, entry: EntryIndex) {
   return obj;
 }
 
-export function getChecksums(directoryPaths: string[]) {
+export function getChecksums(paths: string[]) {
   // No direcory was set, let's do a quick
   // lookup for any changes.
-  if (directoryPaths.length === 0) directoryPaths.push('.');
+  const dirs = paths.length ? paths : getFolders();
+  if (dirs.length === 0) return {};
 
   // Let's look up any changes for any and
   // all directories.
-  const directories = directoryPaths.map((directory) =>
+  const directories = dirs.map((directory) =>
     directory.match(/^\.\/?/gi) ? directory : './'.concat(directory),
   );
 
@@ -148,9 +146,10 @@ function runProcess(cmd: string, ...args: string[]) {
       stdio: ['ignore', 'pipe', 'pipe'],
     }).trim();
   } catch (e) {
+    const ex: ExecException = e as ExecException;
     // Surface any output for debugging
-    if (e.stdout) process.stderr.write(e.stdout);
-    if (e.stderr) process.stderr.write(e.stderr);
+    if (ex.stdout) process.stderr.write(ex.stdout);
+    if (ex.stderr) process.stderr.write(ex.stderr);
     throw e;
   }
 }
