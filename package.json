@@ -12,7 +12,7 @@
     "@types/node": "^24.10.1",
     "@types/url-parse": "^1.4.11",
     "dotenv": "^17.2.3",
-    "lefthook": "^2.0.9",
+    "lefthook": "^2.1.0",
     "nodemon": "^3.1.11",
     "ts-loader": "^9.5.4",
     "typescript": "^5.9.3",
