@@ -8,7 +8,7 @@
   },
   "description": "A database implementation for handling localized files",
   "devDependencies": {
-    "@biomejs/biome": "2.5.0",
+    "@biomejs/biome": "2.5.15",
     "@types/node": "^25.9.3",
     "@types/url-parse": "^1.4.11",
     "dotenv": "^17.4.2",
